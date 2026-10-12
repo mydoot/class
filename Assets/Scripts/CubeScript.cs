@@ -9,6 +9,9 @@ public class CubeScript : MonoBehaviour
         InputAction moveAction;   
         InputAction rotateAction;
         InputAction scaleAction;
+        InputAction jumpAction;
+
+        Rigidbody playerRigidbody;
 
     
         bool isActive = true;
@@ -20,6 +23,8 @@ public class CubeScript : MonoBehaviour
         moveAction = InputSystem.actions.FindAction("Move");
         scaleAction = InputSystem.actions.FindAction("Scale");
         rotateAction = InputSystem.actions.FindAction("Rotate");
+        jumpAction = InputSystem.actions.FindAction("Jump");
+        playerRigidbody = gameObject.GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame
@@ -48,6 +53,11 @@ public class CubeScript : MonoBehaviour
         if (scaleAction.IsPressed())
         {
            Scale();
+        }
+
+        if (jumpAction.IsPressed())
+        {
+            ApplyForce();
         }
     }
 
@@ -85,5 +95,10 @@ public class CubeScript : MonoBehaviour
     void Scale()
     {
         gameObject.transform.localScale += new Vector3(0.01f,0.01f,0.01f);
+    }
+
+    void ApplyForce()
+    {
+        playerRigidbody.AddForce(transform.up * 2, ForceMode.Impulse);
     }
 }
