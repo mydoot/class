@@ -3,28 +3,27 @@
 
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.TextCore.Text;
 
 public class CharacterScript : MonoBehaviour
 {
-        [SerializeField] Transform playerCamera;
-        InputAction moveAction;   
-        InputAction jumpAction;
-        Rigidbody rigidbod;
+    [SerializeField] Transform playerCamera;
+    InputAction moveAction;
+    InputAction jumpAction;
+    Rigidbody rigidbod;
 
-        [SerializeField] float movementSpeed = 2f;
-        [SerializeField] float jumpHeight = 2f;
+    public float movementSpeed = 2f;
+    [SerializeField] float jumpHeight = 2f;
 
-        float gravity = -9.81f;
+    float gravity = -9.81f;
 
-        Vector3 playerVelocity;
+    Vector3 playerVelocity;
 
-        float yaw;
-        float pitch;
-    
+    float yaw;
+    float pitch;
+
     void Awake()
     {
-        rigidbod = gameObject.GetComponent<Rigidbody>(); 
+        rigidbod = gameObject.GetComponent<Rigidbody>();
         rigidbod.freezeRotation = true;
         Cursor.lockState = CursorLockMode.Locked; //Locks camera to center of screen.
     }
@@ -42,14 +41,16 @@ public class CharacterScript : MonoBehaviour
     {
         Look();
         CamPosition();
-        
-        Debug.Log("is jump pressed: " + jumpAction.IsPressed());
-        Debug.Log("is player grounded: " + IsGrounded());
 
-        if (jumpAction.IsPressed()){
+        //Debug.Log("is jump pressed: " + jumpAction.IsPressed());
+        //Debug.Log("is player grounded: " + IsGrounded());
+
+        if (jumpAction.IsPressed())
+        {
             Jump();
         }
 
+        //Debug.DrawRay(transform.position, Vector3.down, Color.red, 100f);
     }
 
     void FixedUpdate()
@@ -67,22 +68,31 @@ public class CharacterScript : MonoBehaviour
 
         Vector3 moveDirection = transform.forward * move.z + transform.right * move.x;
 
-        Vector3 velocity = moveDirection * movementSpeed;
+        Vector3 velocity = moveDirection * movementSpeed + Vector3.up * playerVelocity.y;
         //velocity.y = rigidbod.linearVelocity.y;
+
+        if (!IsGrounded())
+        {
+            playerVelocity.y += gravity * Time.deltaTime;
+        }
+
         rigidbod.MovePosition(transform.position + velocity * Time.deltaTime);
+
     }
 
     void Jump()
     {
+        //Debug.Log("no jump");
         if (IsGrounded())
         {
-            rigidbod.AddForce(transform.up * jumpHeight, ForceMode.Impulse);
+            playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            Debug.Log("jump");
         }
     }
 
     bool IsGrounded()
     {
-        return Physics.Raycast(transform.position, Vector3.down, 1f);
+        return Physics.Raycast(transform.position, Vector3.down, 5f);
     }
 
     void Look()
@@ -103,5 +113,10 @@ public class CharacterScript : MonoBehaviour
         Quaternion camRotation = Quaternion.Euler(pitch, yaw, 0f);
 
         playerCamera.rotation = camRotation;
+    }
+
+    public void SpeedBuff(float inc)
+    {
+        movementSpeed += inc;
     }
 }
