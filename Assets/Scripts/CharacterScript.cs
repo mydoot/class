@@ -50,7 +50,6 @@ public class CharacterScript : MonoBehaviour
             Jump();
         }
 
-        //Debug.DrawRay(transform.position, Vector3.down, Color.red, 100f);
     }
 
     void FixedUpdate()
@@ -64,12 +63,10 @@ public class CharacterScript : MonoBehaviour
 
         Vector3 move = new Vector3(movementValue.x, 0, movementValue.y);
         move = Vector3.ClampMagnitude(move, 1f);
-        //Debug.Log(move);
 
         Vector3 moveDirection = transform.forward * move.z + transform.right * move.x;
 
         Vector3 velocity = moveDirection * movementSpeed + Vector3.up * playerVelocity.y;
-        //velocity.y = rigidbod.linearVelocity.y;
 
         if (!IsGrounded())
         {
@@ -77,12 +74,10 @@ public class CharacterScript : MonoBehaviour
         }
 
         rigidbod.MovePosition(transform.position + velocity * Time.deltaTime);
-
     }
 
     void Jump()
     {
-        //Debug.Log("no jump");
         if (IsGrounded())
         {
             playerVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
