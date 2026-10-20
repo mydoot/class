@@ -5,11 +5,18 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class CharacterScript : MonoBehaviour
 {
+    [Header("Camera")]
     [SerializeField] ThirdPersonCamScript cam;
 
+
+    [Header("Debug")]
+    [SerializeField] TextMeshProUGUI debugText;
+
+    [Header("Bullet Tracer")]
     [SerializeField] Transform orientation;
     [SerializeField] LayerMask aimColliderLayerMask = new LayerMask();
     [SerializeField] Material trailMaterial;
@@ -18,9 +25,18 @@ public class CharacterScript : MonoBehaviour
     InputAction moveAction;
     InputAction jumpAction;
     InputAction attackAction;
+    InputAction boostAction;
     Rigidbody rigidbod;
 
-    public float movementSpeed = 2f;
+    [Header("Important Values")]
+    [SerializeField] float movementSpeed = 2f;
+    public float displayedSpeed = 0;
+    float targetMovementSpeed;
+    [SerializeField] float boostSpeed = 20;
+      
+    [Tooltip("In seconds")]
+    [SerializeField] float boostDuration = 1;
+    bool boostActive = false;
     [SerializeField] float jumpHeight = 2f;
 
     float gravity = -9.81f;
@@ -45,13 +61,15 @@ public class CharacterScript : MonoBehaviour
         moveAction = InputSystem.actions.FindAction("Move");
         jumpAction = InputSystem.actions.FindAction("Jump");
         attackAction = InputSystem.actions.FindAction("Attack");
+        boostAction = InputSystem.actions.FindAction("Boost");
 
+        targetMovementSpeed = movementSpeed;
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        debugText.text = $"Movement Speed: {displayedSpeed:F1}";
         //Debug.Log("is jump pressed: " + jumpAction.IsPressed());
         //Debug.Log("is player grounded: " + IsGrounded());
 
@@ -65,6 +83,13 @@ public class CharacterScript : MonoBehaviour
             Shoot();
         }
 
+        if (boostAction.WasPressedThisFrame())
+        {
+            if (!boostActive)
+            {
+                StartCoroutine(ActivateBoost());
+            }
+        }
     }
 
     void FixedUpdate()
@@ -81,14 +106,24 @@ public class CharacterScript : MonoBehaviour
 
         Vector3 moveDirection = orientation.forward * move.z + orientation.right * move.x;
 
-        Vector3 velocity = moveDirection.normalized * movementSpeed + Vector3.up * playerVelocity.y;    
+        Vector3 velocity = moveDirection.normalized * movementSpeed + Vector3.up * playerVelocity.y;
+        Vector3 boostVelocity = moveDirection.normalized * movementSpeed; //boost can only occur on the x, z plane
+
+        updateDisplayedSpeed(velocity);
 
         if (!IsGrounded())
         {
             playerVelocity.y += gravity * Time.deltaTime;
         }
 
-        rigidbod.MovePosition(rigidbod.position + velocity * Time.deltaTime);
+        if (boostActive)
+        {
+            rigidbod.MovePosition(rigidbod.position + boostVelocity * Time.deltaTime);
+        }
+        else
+        {
+            rigidbod.MovePosition(rigidbod.position + velocity * Time.deltaTime);
+        }
     }
 
     void Jump()
@@ -116,7 +151,7 @@ public class CharacterScript : MonoBehaviour
         else
         {
             Debug.Log("miss");
-             StartCoroutine(showTracer(transform.position, transform.position + cam.getViewDirection() * 999, raycastHit));
+            StartCoroutine(showTracer(transform.position, transform.position + cam.getViewDirection() * 999, raycastHit));
         }
     }
 
@@ -146,9 +181,9 @@ public class CharacterScript : MonoBehaviour
         float distance = Vector3.Distance(startPoint, endPoint);
         float remainingDistance = distance;
 
-        while(remainingDistance > 0)
+        while (remainingDistance > 0)
         {
-            tracer.transform.position = Vector3.Lerp(startPoint, endPoint, Mathf.Clamp01(1 - (remainingDistance/distance)));
+            tracer.transform.position = Vector3.Lerp(startPoint, endPoint, Mathf.Clamp01(1 - (remainingDistance / distance)));
 
             remainingDistance -= 100f * Time.deltaTime;
 
@@ -166,5 +201,40 @@ public class CharacterScript : MonoBehaviour
     public void SpeedBuff(float inc)
     {
         movementSpeed += inc;
+        targetMovementSpeed += inc;
+    }
+
+
+    IEnumerator ActivateBoost()
+    {
+        Debug.Log("boosting");
+        boostActive = true;
+        float saveOriginalSpeed = targetMovementSpeed;
+        movementSpeed = boostSpeed;
+        yield return new WaitForSeconds(boostDuration);
+        boostActive = false;
+        
+        float boostDecay = 1f;
+        while (movementSpeed != saveOriginalSpeed)
+        {
+            movementSpeed -= boostDecay;
+            yield return null;
+        }
+
+        movementSpeed = saveOriginalSpeed;
+
+
+    }
+
+    void updateDisplayedSpeed(Vector3 velocity)
+    {
+
+        if (velocity == Vector3.zero)
+        {
+            displayedSpeed = 0f;
+        } else
+        {
+            displayedSpeed = movementSpeed;
+        }
     }
 }
