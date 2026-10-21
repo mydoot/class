@@ -4,7 +4,7 @@ using UnityEngine;
 public class DestroyerScript : MonoBehaviour
 {
 
-    public GameObject[] ballObjs;
+    public GameObject[] spawnedObjs;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -20,11 +20,11 @@ public class DestroyerScript : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        ballObjs = GameObject.FindGameObjectsWithTag("Ball");
+        spawnedObjs = GameObject.FindGameObjectsWithTag("SpawnedObj");
 
-        foreach(GameObject ball in ballObjs)
+        foreach(GameObject obj in spawnedObjs)
         {
-            Destroy(ball);
+            Destroy(obj);
         }
     }
 }

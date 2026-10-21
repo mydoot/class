@@ -6,6 +6,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
+using UnityEngine.Pool;
 
 public class CharacterScript : MonoBehaviour
 {
@@ -45,14 +46,18 @@ public class CharacterScript : MonoBehaviour
 
     public Vector3 move;
 
-    float yaw;
-    float pitch;
+    ObjectPool<TrailRenderer> tracerPool; // pool for the bullet tracers
 
     void Awake()
     {
         rigidbod = gameObject.GetComponent<Rigidbody>();
         rigidbod.freezeRotation = true;
-        Cursor.lockState = CursorLockMode.Locked; //Locks camera to center of screen.
+        Cursor.lockState = CursorLockMode.Locked; //Locks camera to center of screen.\
+        tracerPool = new ObjectPool<TrailRenderer>(
+            createFunc: createBulletTracer,
+            defaultCapacity: 10,
+            maxSize: 150
+            );
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -140,6 +145,15 @@ public class CharacterScript : MonoBehaviour
         return Physics.Raycast(transform.position, Vector3.down, 5f);
     }
 
+    void Aim()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+        if (Physics.Raycast(ray, out RaycastHit raycastHit, 999f, aimColliderLayerMask))
+        {
+            ///debugTransform.position = raycastHit.point;
+        }
+    }
+
     void Shoot()
     {
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
@@ -162,7 +176,7 @@ public class CharacterScript : MonoBehaviour
         trail.colorGradient = colorGradient;
         trail.material = trailMaterial;
         trail.widthCurve = widthCurve;
-        trail.time = 0.5f;
+        trail.time = 0.15f;
         trail.minVertexDistance = .1f;
 
         trail.emitting = false;
@@ -173,7 +187,8 @@ public class CharacterScript : MonoBehaviour
 
     IEnumerator showTracer(Vector3 startPoint, Vector3 endPoint, RaycastHit hit)
     {
-        TrailRenderer tracer = createBulletTracer();
+        TrailRenderer tracer = tracerPool.Get(); 
+        tracer.gameObject.SetActive(true);
         tracer.transform.position = startPoint;
         yield return null;
 
@@ -181,9 +196,9 @@ public class CharacterScript : MonoBehaviour
         float distance = Vector3.Distance(startPoint, endPoint);
         float remainingDistance = distance;
 
-        while (remainingDistance > 0)
+        while(remainingDistance > 0)
         {
-            tracer.transform.position = Vector3.Lerp(startPoint, endPoint, Mathf.Clamp01(1 - (remainingDistance / distance)));
+            tracer.transform.position = Vector3.Lerp(startPoint, endPoint, Mathf.Clamp01(1 - (remainingDistance/distance)));
 
             remainingDistance -= 100f * Time.deltaTime;
 
@@ -192,10 +207,11 @@ public class CharacterScript : MonoBehaviour
 
         tracer.transform.position = endPoint;
 
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(tracer.time);
         yield return null;
         tracer.emitting = false;
-        Destroy(tracer);
+        tracer.gameObject.SetActive(false);
+        tracerPool.Release(tracer);
     }
 
     public void SpeedBuff(float inc)
@@ -222,8 +238,6 @@ public class CharacterScript : MonoBehaviour
         }
 
         movementSpeed = saveOriginalSpeed;
-
-
     }
 
     void updateDisplayedSpeed(Vector3 velocity)
@@ -238,3 +252,4 @@ public class CharacterScript : MonoBehaviour
         }
     }
 }
+

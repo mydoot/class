@@ -3,7 +3,6 @@ using UnityEngine;
 public class SpawnerScript : MonoBehaviour
 {
 
-    [SerializeField] GameObject ball;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -19,6 +18,6 @@ public class SpawnerScript : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        GameObject newBall = Instantiate(ball, other.gameObject.transform.position, Quaternion.identity);
+        GameObject newObj = Instantiate(GameManager.Instance.getRandObj(), other.gameObject.transform.position, Quaternion.identity);
     }
 }
