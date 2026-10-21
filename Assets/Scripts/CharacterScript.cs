@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
 using UnityEngine.Pool;
+using UnityEngine.UI;
 
 public class CharacterScript : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class CharacterScript : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] TextMeshProUGUI debugText;
+    [SerializeField] Slider boostGauge;
 
     [Header("Bullet Tracer")]
     [SerializeField] Transform orientation;
@@ -34,10 +36,12 @@ public class CharacterScript : MonoBehaviour
     public float displayedSpeed = 0;
     float targetMovementSpeed;
     [SerializeField] float boostSpeed = 20;
-      
+
     [Tooltip("In seconds")]
     [SerializeField] float boostDuration = 1;
     bool boostActive = false;
+    [SerializeField] float currentBoostGauge;
+    float maxBoostGauge = 100;
     [SerializeField] float jumpHeight = 2f;
 
     float gravity = -9.81f;
@@ -69,11 +73,16 @@ public class CharacterScript : MonoBehaviour
         boostAction = InputSystem.actions.FindAction("Boost");
 
         targetMovementSpeed = movementSpeed;
+
+        boostGauge.maxValue = maxBoostGauge;
+        currentBoostGauge = maxBoostGauge;
     }
 
     // Update is called once per frame
     void Update()
     {
+        workBoostGauge();
+
         debugText.text = $"Movement Speed: {displayedSpeed:F1}";
         //Debug.Log("is jump pressed: " + jumpAction.IsPressed());
         //Debug.Log("is player grounded: " + IsGrounded());
@@ -92,7 +101,7 @@ public class CharacterScript : MonoBehaviour
         {
             if (!boostActive)
             {
-                StartCoroutine(ActivateBoost());
+                tryConsumeBoost();
             }
         }
     }
@@ -187,7 +196,7 @@ public class CharacterScript : MonoBehaviour
 
     IEnumerator showTracer(Vector3 startPoint, Vector3 endPoint, RaycastHit hit)
     {
-        TrailRenderer tracer = tracerPool.Get(); 
+        TrailRenderer tracer = tracerPool.Get();
         tracer.gameObject.SetActive(true);
         tracer.transform.position = startPoint;
         yield return null;
@@ -196,9 +205,9 @@ public class CharacterScript : MonoBehaviour
         float distance = Vector3.Distance(startPoint, endPoint);
         float remainingDistance = distance;
 
-        while(remainingDistance > 0)
+        while (remainingDistance > 0)
         {
-            tracer.transform.position = Vector3.Lerp(startPoint, endPoint, Mathf.Clamp01(1 - (remainingDistance/distance)));
+            tracer.transform.position = Vector3.Lerp(startPoint, endPoint, Mathf.Clamp01(1 - (remainingDistance / distance)));
 
             remainingDistance -= 100f * Time.deltaTime;
 
@@ -224,12 +233,15 @@ public class CharacterScript : MonoBehaviour
     IEnumerator ActivateBoost()
     {
         Debug.Log("boosting");
+
         boostActive = true;
+        
         float saveOriginalSpeed = targetMovementSpeed;
         movementSpeed = boostSpeed;
+        currentBoostGauge -= 30;
         yield return new WaitForSeconds(boostDuration);
         boostActive = false;
-        
+
         float boostDecay = 1f;
         while (movementSpeed != saveOriginalSpeed)
         {
@@ -240,13 +252,32 @@ public class CharacterScript : MonoBehaviour
         movementSpeed = saveOriginalSpeed;
     }
 
+    void workBoostGauge()
+    {
+        if (currentBoostGauge != maxBoostGauge)
+        {
+            currentBoostGauge += 0.15f;
+        }
+
+        boostGauge.value = currentBoostGauge;
+    }
+
+    void tryConsumeBoost()
+    {
+        if (currentBoostGauge >= 30)
+        {
+            StartCoroutine(ActivateBoost());
+        }
+    }
+
     void updateDisplayedSpeed(Vector3 velocity)
     {
 
         if (velocity == Vector3.zero)
         {
             displayedSpeed = 0f;
-        } else
+        }
+        else
         {
             displayedSpeed = movementSpeed;
         }
