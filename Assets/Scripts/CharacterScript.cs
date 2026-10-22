@@ -17,6 +17,7 @@ public class CharacterScript : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] TextMeshProUGUI debugText;
+    [SerializeField] TextMeshProUGUI debugText2;
     [SerializeField] Slider boostGauge;
 
     [Header("Bullet Tracer")]
@@ -47,10 +48,17 @@ public class CharacterScript : MonoBehaviour
     float gravity = -9.81f;
 
     Vector3 playerVelocity;
+    Vector3 boostVelocity;
 
     public Vector3 move;
+    
 
     ObjectPool<TrailRenderer> tracerPool; // pool for the bullet tracers
+
+
+    [SerializeField] Transform debugTransform;
+
+    [SerializeField] Image reticle;
 
     void Awake()
     {
@@ -82,6 +90,7 @@ public class CharacterScript : MonoBehaviour
     void Update()
     {
         workBoostGauge();
+        Aim();
 
         debugText.text = $"Movement Speed: {displayedSpeed:F1}";
         //Debug.Log("is jump pressed: " + jumpAction.IsPressed());
@@ -119,11 +128,8 @@ public class CharacterScript : MonoBehaviour
         move = Vector3.ClampMagnitude(move, 1f);
 
         Vector3 moveDirection = orientation.forward * move.z + orientation.right * move.x;
-
-        Vector3 velocity = moveDirection.normalized * movementSpeed + Vector3.up * playerVelocity.y;
-        Vector3 boostVelocity = moveDirection.normalized * movementSpeed; //boost can only occur on the x, z plane
-
-        updateDisplayedSpeed(velocity);
+        
+        updateDisplayedSpeed(moveDirection * movementSpeed);
 
         if (!IsGrounded())
         {
@@ -136,6 +142,7 @@ public class CharacterScript : MonoBehaviour
         }
         else
         {
+            Vector3 velocity = moveDirection.normalized * movementSpeed + Vector3.up * playerVelocity.y;
             rigidbod.MovePosition(rigidbod.position + velocity * Time.deltaTime);
         }
     }
@@ -154,13 +161,27 @@ public class CharacterScript : MonoBehaviour
         return Physics.Raycast(transform.position, Vector3.down, 5f);
     }
 
+    Vector3 getBoostDirection()
+    {
+        Vector3 boostDirection = orientation.forward * move.z + orientation.right * move.x;
+
+        Vector3 boostVelocity = boostDirection.normalized * boostSpeed
+        ;
+        return boostVelocity;
+    }
+
     void Aim()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-        if (Physics.Raycast(ray, out RaycastHit raycastHit, 999f, aimColliderLayerMask))
+        Vector3 target = Camera.main.WorldToScreenPoint(debugTransform.position);
+        if (target.x <= reticle.rectTransform.rect.width && target.y >= reticle.rectTransform.rect.height)
         {
-            ///debugTransform.position = raycastHit.point;
+            debugText2.text = $"target in sight";
+            Debug.Log("within reticle");
+        } else
+        {
+            debugText2.text = $"no target";
         }
+        Debug.Log($"Target pos: {target.x}, {target.y}");
     }
 
     void Shoot()
@@ -237,6 +258,7 @@ public class CharacterScript : MonoBehaviour
         boostActive = true;
         
         float saveOriginalSpeed = targetMovementSpeed;
+        boostVelocity = getBoostDirection();
         movementSpeed = boostSpeed;
         currentBoostGauge -= 30;
         yield return new WaitForSeconds(boostDuration);
@@ -254,7 +276,7 @@ public class CharacterScript : MonoBehaviour
 
     void workBoostGauge()
     {
-        if (currentBoostGauge != maxBoostGauge)
+        if (currentBoostGauge < maxBoostGauge)
         {
             currentBoostGauge += 0.15f;
         }
