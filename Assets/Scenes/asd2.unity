@@ -1092,7 +1092,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 1381, y: 350}
+  m_AnchoredPosition: {x: 1482, y: 350}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &681429532
@@ -3273,7 +3273,7 @@ GameObject:
   - component: {fileID: 2127845957}
   - component: {fileID: 2127845956}
   m_Layer: 0
-  m_Name: Capsule
+  m_Name: Enemy
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3437,7 +3437,7 @@ PrefabInstance:
     - target: {fileID: 6847926169076285435, guid: 0017efc6cdb73c25f9bea8b01ee216d0, type: 3}
       propertyPath: debugTransform
       value: 
-      objectReference: {fileID: 1480445440}
+      objectReference: {fileID: 2127845959}
     - target: {fileID: 6847926169076285435, guid: 0017efc6cdb73c25f9bea8b01ee216d0, type: 3}
       propertyPath: colorGradient.ctime0
       value: 0

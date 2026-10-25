@@ -51,7 +51,7 @@ public class CharacterScript : MonoBehaviour
     Vector3 boostVelocity;
 
     public Vector3 move;
-    
+
 
     ObjectPool<TrailRenderer> tracerPool; // pool for the bullet tracers
 
@@ -59,6 +59,8 @@ public class CharacterScript : MonoBehaviour
     [SerializeField] Transform debugTransform;
 
     [SerializeField] Image reticle;
+
+    bool haveTarget;
 
     void Awake()
     {
@@ -84,6 +86,7 @@ public class CharacterScript : MonoBehaviour
 
         boostGauge.maxValue = maxBoostGauge;
         currentBoostGauge = maxBoostGauge;
+        haveTarget = true; //debug
     }
 
     // Update is called once per frame
@@ -128,7 +131,7 @@ public class CharacterScript : MonoBehaviour
         move = Vector3.ClampMagnitude(move, 1f);
 
         Vector3 moveDirection = orientation.forward * move.z + orientation.right * move.x;
-        
+
         updateDisplayedSpeed(moveDirection * movementSpeed);
 
         if (!IsGrounded())
@@ -172,12 +175,15 @@ public class CharacterScript : MonoBehaviour
 
     void Aim()
     {
-        Vector3 target = Camera.main.WorldToScreenPoint(debugTransform.position);
-        if (target.x <= reticle.rectTransform.rect.width && target.y >= reticle.rectTransform.rect.height)
+        Vector2 target = Camera.main.WorldToScreenPoint(debugTransform.position);
+        Vector2 halfReticleArea = new Vector2(reticle.rectTransform.rect.width / 2, reticle.rectTransform.rect.height / 2);
+        Vector2 centerPoint = new Vector2(Screen.width / 2, Screen.height / 2);
+        if (Vector2.Distance(target, centerPoint) <= halfReticleArea.x && Vector2.Distance(target, centerPoint) <= halfReticleArea.y)
         {
             debugText2.text = $"target in sight";
             Debug.Log("within reticle");
-        } else
+        }
+        else
         {
             debugText2.text = $"no target";
         }
@@ -186,7 +192,17 @@ public class CharacterScript : MonoBehaviour
 
     void Shoot()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            Ray ray;
+        if (haveTarget)
+        {
+            ray = Camera.main.ScreenPointToRay(debugTransform.position);
+        }
+        else
+        {
+            ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+        }
+
         if (Physics.Raycast(ray, out RaycastHit raycastHit, 999f, aimColliderLayerMask))
         {
             Debug.Log("hit");
@@ -256,7 +272,7 @@ public class CharacterScript : MonoBehaviour
         Debug.Log("boosting");
 
         boostActive = true;
-        
+
         float saveOriginalSpeed = targetMovementSpeed;
         boostVelocity = getBoostDirection();
         movementSpeed = boostSpeed;
