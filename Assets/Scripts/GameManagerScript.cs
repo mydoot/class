@@ -5,6 +5,8 @@ public class GameManager : MonoBehaviour
     public GameObject cube;
     public GameObject cylinder;
 
+    public Canvas canvas;
+
     private static GameManager _instance; // make a static private variable of the component data type
     public static GameManager Instance { get { return _instance; } } // make a public way to access the private variable
     private void Awake()
@@ -18,6 +20,11 @@ public class GameManager : MonoBehaviour
             _instance = this;
 
         }
+    }
+
+    void Start()
+    {
+        checkDisableUI();
     }
 
     float getRandomNum(float min, float max)
@@ -47,7 +54,13 @@ public class GameManager : MonoBehaviour
         return newSpawnedObj;
     }
 
-
+    void checkDisableUI()
+    {
+        if (SettingsManager.Instance.disableUI)
+        {
+            canvas.enabled = false;
+        }
+    }
 
 
 

@@ -552,6 +552,7 @@ MonoBehaviour:
   ball: {fileID: 1326554141040665270, guid: 70acb30795db3c2559531f4bdd959c7d, type: 3}
   cube: {fileID: 5230947512657523244, guid: 8340d388a1ce27c4e84b9c65f4010fc2, type: 3}
   cylinder: {fileID: 6777262744139212171, guid: 6e969a2747895ebaf9701035c16c6221, type: 3}
+  canvas: {fileID: 0}
 --- !u!4 &219075927
 Transform:
   m_ObjectHideFlags: 0

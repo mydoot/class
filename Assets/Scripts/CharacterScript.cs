@@ -89,6 +89,8 @@ public class CharacterScript : MonoBehaviour
         boostGauge.maxValue = maxBoostGauge;
         currentBoostGauge = maxBoostGauge;
         haveTarget = true; //debug
+
+        checkForSettings();
     }
 
     // Update is called once per frame
@@ -331,5 +333,15 @@ public class CharacterScript : MonoBehaviour
         {
             displayedSpeed = movementSpeed;
         }
+    }
+
+    void checkForSettings()
+    {
+        if (SettingsManager.Instance.infiniteBoost)
+        {
+            maxBoostGauge = 99999f;
+            currentBoostGauge = maxBoostGauge;
+        }
+       
     }
 }
