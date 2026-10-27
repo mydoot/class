@@ -59,6 +59,8 @@ public class CharacterScript : MonoBehaviour
     [SerializeField] Transform debugTransform;
 
     [SerializeField] Image reticle;
+    [SerializeField] ReticleScript lockonReticle;
+
 
     bool haveTarget;
 
@@ -175,44 +177,54 @@ public class CharacterScript : MonoBehaviour
 
     void Aim()
     {
-        Vector2 target = Camera.main.WorldToScreenPoint(debugTransform.position);
+        Vector3 target = Camera.main.WorldToScreenPoint(debugTransform.position);
         Vector2 halfReticleArea = new Vector2(reticle.rectTransform.rect.width / 2, reticle.rectTransform.rect.height / 2);
         Vector2 centerPoint = new Vector2(Screen.width / 2, Screen.height / 2);
-        if (Vector2.Distance(target, centerPoint) <= halfReticleArea.x && Vector2.Distance(target, centerPoint) <= halfReticleArea.y)
+        if (Vector2.Distance(target, centerPoint) <= halfReticleArea.x && Vector2.Distance(target, centerPoint) <= halfReticleArea.y && target.z > -1)
         {
+            
             debugText2.text = $"target in sight";
-            Debug.Log("within reticle");
+            Debug.Log($"{debugTransform.name}");
+            haveTarget = true;
+            lockonReticle.setReticlePosition(target);
         }
         else
         {
             debugText2.text = $"no target";
+            haveTarget = false;
+            lockonReticle.hideReticle();
         }
         Debug.Log($"Target pos: {target.x}, {target.y}");
     }
 
     void Shoot()
     {
-            Ray ray;
+        Ray ray;
         if (haveTarget)
         {
-            ray = Camera.main.ScreenPointToRay(debugTransform.position);
+            StartCoroutine(showTracer(transform.position, debugTransform.position));
+            Debug.Log("shooting target");
+            if (Physics.Raycast(transform.position, debugTransform.position, out RaycastHit raycastHit, 999f, aimColliderLayerMask))
+            {
+            }
         }
         else
         {
+            Debug.Log("shooting");
             ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
-
+            if (Physics.Raycast(ray, out RaycastHit raycastHit, 999f, aimColliderLayerMask))
+            {
+                Debug.Log("hit");
+                StartCoroutine(showTracer(transform.position, raycastHit.point));
+            }
+            else
+            {
+                Debug.Log("miss");
+                StartCoroutine(showTracer(transform.position, transform.position + cam.getViewDirection() * 999));
+            }
         }
 
-        if (Physics.Raycast(ray, out RaycastHit raycastHit, 999f, aimColliderLayerMask))
-        {
-            Debug.Log("hit");
-            StartCoroutine(showTracer(transform.position, raycastHit.point, raycastHit));
-        }
-        else
-        {
-            Debug.Log("miss");
-            StartCoroutine(showTracer(transform.position, transform.position + cam.getViewDirection() * 999, raycastHit));
-        }
+
     }
 
     TrailRenderer createBulletTracer()
@@ -231,7 +243,7 @@ public class CharacterScript : MonoBehaviour
         return trail;
     }
 
-    IEnumerator showTracer(Vector3 startPoint, Vector3 endPoint, RaycastHit hit)
+    IEnumerator showTracer(Vector3 startPoint, Vector3 endPoint)
     {
         TrailRenderer tracer = tracerPool.Get();
         tracer.gameObject.SetActive(true);
@@ -321,4 +333,3 @@ public class CharacterScript : MonoBehaviour
         }
     }
 }
-
